@@ -93,7 +93,7 @@ https://github.com/KenpachiRyu/lr-slr-terminal-challenge
 
 ## Author
 
-Developed by Kenpachi Ryuken
+Developed by Héctor Oswaldo Villegas Pérez
 Computer Systems Engineering Student — UAA
 
 --------------------------------------------------
