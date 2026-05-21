@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LR/SLR Terminal Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+background:#050505;
+color:#00ff88;
+font-family:'Share Tech Mono', monospace;
+padding:25px;
+overflow-x:hidden;
+min-height:100vh;
+}
+
+body::before{
+content:"";
+position:fixed;
+inset:0;
+background:linear-gradient(rgba(0,255,100,.05) 1px, transparent 1px);
+background-size:100% 3px;
+pointer-events:none;
+}
+
+.container{
+max-width:1100px;
+margin:auto;
+}
+
+.terminal{
+background:#0d0d0d;
+border:2px solid #00ff88;
+border-radius:18px;
+padding:30px;
+box-shadow:0 0 30px #00ff8840;
+}
+
+h1{
+text-align:center;
+font-size:2.7rem;
+margin-bottom:10px;
+text-shadow:0 0 10px #00ff88;
+}
+
+.subtitle{
+text-align:center;
+margin-bottom:30px;
+color:#7dffc4;
+}
+
+.section{
+display:none;
+}
+
+.active{
+display:block;
+}
+
+.card{
+background:#111;
+border:1px solid #00ff8830;
+border-radius:14px;
+padding:25px;
+margin-bottom:25px;
+}
+
+.card h2{
+margin-bottom:20px;
+color:#00ffaa;
+}
+
+input[type="text"], select{
+width:100%;
+padding:14px;
+border-radius:10px;
+background:#000;
+border:1px solid #00ff88;
+color:#00ff88;
+font-family:inherit;
+margin:10px 0 20px;
+}
+
+.option{
+display:block;
+padding:14px;
+border:1px solid #00ff8830;
+border-radius:10px;
+margin:10px 0;
+cursor:pointer;
+transition:.2s;
+}
+
+.option:hover{
+background:#00ff8820;
+transform:translateX(4px);
+}
+
+button{
+padding:14px 22px;
+background:#00ff88;
+color:#000;
+border:none;
+border-radius:10px;
+font-weight:bold;
+font-family:inherit;
+cursor:pointer;
+transition:.2s;
+margin-right:10px;
+}
+
+button:hover{
+transform:scale(1.05);
+box-shadow:0 0 15px #00ff88;
+}
+
+button:disabled{
+opacity:.5;
+cursor:not-allowed;
+transform: none !important;
+box-shadow: none !important;
+}
+
+.nav-buttons{
+display:flex;
+justify-content:space-between;
+margin-top:25px;
+}
+
+.drag-container{
+display:flex;
+flex-direction:column;
+gap:10px;
+margin-top:20px;
+}
+
+.drag-item{
+padding:15px;
+border:1px solid #00ff88;
+border-radius:10px;
+background:#151515;
+cursor:grab;
+user-select: none;
+}
+
+.timer{
+position:fixed;
+top:20px;
+right:20px;
+background:#000;
+border:1px solid #00ff88;
+padding:12px 18px;
+border-radius:12px;
+z-index:999;
+}
+
+.progress{
+height:10px;
+background:#111;
+border-radius:10px;
+overflow:hidden;
+margin-bottom:25px;
+}
+
+.progress-bar{
+height:100%;
+width:0%;
+background:#00ff88;
+transition:.3s;
+}
+
+.word-grid{
+display:grid;
+grid-template-columns:repeat(12,38px);
+gap:5px;
+justify-content:center;
+margin-top:25px;
+}
+
+.word-cell{
+width:38px;
+height:38px;
+display:flex;
+align-items:center;
+justify-content:center;
+border:1px solid #00ff88;
+background:#111;
+font-weight:bold;
+user-select:none;
+cursor:pointer;
+font-size: 0.9rem;
+}
+
+.word-cell.selected{
+background:#00aa55;
+}
+
+.word-cell.found{
+background:#00ff88;
+color:#000;
+}
+
+.result{
+display:none;
+text-align:center;
+padding:40px;
+}
+
+.token{
+margin-top:20px;
+padding:15px;
+border:1px dashed #00ff88;
+display:inline-block;
+font-size:1.2rem;
+}
+
+.matrix{
+position:fixed;
+inset:0;
+opacity:.1;
+z-index:-1;
+font-size:13px;
+overflow:hidden;
+white-space:pre-wrap;
+word-break: break-all;
+}
+
+.match-item{
+padding:12px;
+border:1px solid #00ff88;
+border-radius:10px;
+margin:10px 0;
+}
+
+.btn-restart {
+margin-top: 30px;
+background: #ff0055;
+color: #fff;
+border: 1px solid #ff0055;
+}
+
+.btn-restart:hover {
+box-shadow: 0 0 15px #ff0055;
+background: #ff1a6c;
+}
+
+</style>
+</head>
+<body>
+
+<div class="matrix" id="matrix"></div>
+
+<div class="timer">
+⏱ <span id="time">00:00</span>
+</div>
+
+<div class="container">
+<div class="terminal">
+
+<h1>LR / SLR TERMINAL CHALLENGE</h1>
+<p class="subtitle">Compiladores I — Análisis Sintáctico Ascendente</p>
+
+<div id="registerSection" class="section active">
+<div class="card">
+<h2>Registro del Equipo</h2>
+
+<label>Nombre del equipo</label>
+<input type="text" id="teamName">
+
+<label>Cantidad de integrantes</label>
+<select id="memberCount" onchange="generateMembers()">
+<option value="">Selecciona</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+</select>
+
+<div id="membersContainer"></div>
+
+<button onclick="startExam()">INICIAR EXAMEN</button>
+
+</div>
+</div>
+
+<div id="examSection" class="section">
+
+<div class="progress">
+<div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div id="activityContainer"></div>
+
+<div class="nav-buttons">
+<button id="prevBtn" onclick="previousActivity()">⬅ ANTERIOR</button>
+<button id="nextBtn" onclick="nextActivity()" disabled>SIGUIENTE ➡</button>
+</div>
+
+</div>
+
+<div class="result" id="resultSection">
+<h2>ANÁLISIS COMPLETADO</h2>
+<div id="scoreText"></div>
+<div id="teamInfo" style="margin-top:20px"></div>
+<div style="margin-top:20px">
+⏱ Tiempo total: <strong id="finalTime"></strong>
+</div>
+<div class="token" id="token"></div>
+<p style="margin-top:25px">Toma captura de esta pantalla.</p>
+<div>
+<button class="btn-restart" onclick="resetToStart()">↩ VOLVER AL INICIO</button>
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+
+// MATRIX BACKGROUND ANIMATION
+(function(){
+const chars='01LRSLRSHIFTREDUCEFOLLOWSTACKDFA';
+let output='';
+for(let i=0;i<4000;i++){
+output+=chars[Math.floor(Math.random()*chars.length)];
+}
+document.getElementById('matrix').innerText=output;
+})();
+
+// TIMER MANAGEMENT
+let seconds=0;
+let timerStarted=false;
+let timerInterval = null;
+
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{
+        if(!timerStarted) return;
+        seconds++;
+        const mins=Math.floor(seconds/60);
+        const secs=seconds%60;
+        document.getElementById('time').innerText=`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+    },1000);
+}
+
+// TEAM INPUT GENERATION
+function generateMembers(){
+const count=document.getElementById('memberCount').value;
+const container=document.getElementById('membersContainer');
+container.innerHTML='';
+for(let i=1;i<=count;i++){
+container.innerHTML+=`
+<label>Integrante ${i}</label>
+<input type="text" class="memberInput">
+`;
+}
+}
+
+// SHUFFLE ALGORITHM
+function shuffle(array){
+for(let i=array.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[array[i],array[j]]=[array[j],array[i]];
+}
+return array;
+}
+
+// FORCE SHUFFLE
+function forceShuffle(array, correctArray) {
+let shuffled = [...array];
+let attempts = 0;
+while (attempts < 20) {
+shuffled = shuffle(shuffled);
+if (JSON.stringify(shuffled) !== JSON.stringify(correctArray)) {
+break;
+}
+attempts++;
+}
+return shuffled;
+}
+
+// DATA BANK QUESTIONS
+const multipleQuestions=[
+{ question:'¿Qué significa la R en el acrónimo de los analizadores sintácticos LR?', options:['Recursive evaluation','Rightmost derivation (derivación por la derecha en orden inverso)','Reduced lookahead state'], correct:1 },
+{ question:'¿Qué componente utiliza SLR(1) para resolver los conflictos de ambigüedad del autómata base?', options:['Un token de búsqueda hacia adelante (Lookahead) y los conjuntos Siguiente','Una tabla de símbolos dinámicos recursivos','Un árbol sintáctico invertido sin estados'], correct:0 },
+{ question:'¿Qué elementos estructurales se almacenan explícitamente en la pila de un analizador LR?', options:['Números de estado y símbolos (tokens o no terminales)','Únicamente cadenas de entrada en texto plano','Expresiones regulares del analizador léxico'], correct:0 },
+{ question:'¿Con qué contenido inicia normalmente la pila de un parser LR?', options:['Con el estado inicial 0','Con el símbolo $','Completamente vacía'], correct:0 },
+{ question:'¿En qué consiste la operación fundamental de Desplazamiento (Shift)?', options:['Transferir un símbolo terminal de la entrada a la parte superior de la pila','Sustituir una cadena por un no terminal basándose en una producción','Cambiar el autómata de determinístico a no determinístico'], correct:0 },
+{ question:'¿Cuándo ocurre una operación de Reducción (Reduce)?', options:['Cuando la cadena en la cima coincide con el lado derecho de una producción y se sustituye por su no terminal','Cuando se limpia la pila para corregir un conflicto de ambigüedad léxica','Al descartar el token actual de la entrada por no pertenecer a Follow'], correct:0 },
+{ question:'¿Por qué es un requisito técnico indispensable aumentar la gramática con una regla S\' -> S?', options:['Para proveer al analizador un punto de aceptación único, claro y distinguido','Para que el analizador léxico reconozca los saltos de línea de forma nativa','Para evitar que el autómata finite genere transiciones del tipo épsilon'], correct:0 },
+{ question:'¿Cómo se denominan las cadenas intermedias de símbolos generadas durante el proceso de derivación inversa?', options:['Formas sentenciales derechas','Prefijos viables deterministas','Tokens de control sintáctico'], correct:0 },
+{ question:'¿Qué es el "Prefijo Viable" en el contexto del análisis sintáctico de reducción por desplazamiento?', options:['La secuencia de símbolos que se encuentra almacenada en la pila de análisis','El conjunto de tokens que quedan por procesar en el buffer de entrada','La ruta de estados del DFA que no contienen reducciones posibles'], correct:0 },
+{ question:'¿A qué se refiere el término "Handle" o "Controlador" en una forma sentencial?', options:['A la cadena en el tope de la pila que coincide con una producción, junto con dicha regla','Al estado inicial del DFA que controla las transiciones de los tokens terminales','Al mecanismo encargado de disparar los errores de sintaxis en SLR(1)'], correct:0 },
+{ question:'¿Qué representa exactamente el punto (•) dentro de un elemento LR(0)?', options:['El avance del reconocimiento de la regla (qué se ha analizado y qué falta)','Un marcador que indica un conflicto Shift-Reduce inminente','El final absoluto de la cadena de entrada evaluada por el parser'], correct:0 },
+{ question:'¿En qué se diferencian los elementos de núcleo de los elementos de cerradura en el DFA?', options:['Los de núcleo determinan el estado y transiciones; los de cerradura añaden reglas vía épsilon','Los de núcleo solo contienen terminales y los de cerradura contienen no terminales','Los de núcleo se vacían en la pila y los de cerradura detienen el árbol sintáctico'], correct:0 },
+{ question:'¿Qué condición define a una gramática como estrictamente LR(0)?', options:['Cada estado del DFA es puramente de desplazamiento o de reducción con un único elemento completo','No utiliza operadores matemáticos en sus formas sentenciales intermedias','Su conjunto Follow carece de tokens de fin de cadena ($)'], correct:0 },
+{ question:'¿Cuándo se presenta un conflicto de reducción por desplazamiento (Shift-Reduce)?', options:['Cuando un estado sugiere reducir por una regla y simultáneamente permite desplazar un token','Cuando la pila se llena por completo y no quedan tokens en el buffer de entrada','Cuando el lookahead pertenece a dos estados de aceptación distintos'], correct:0 },
+{ question:'¿Qué ocurre en un conflicto de Reducción-Reducción (Reduce-Reduce)?', options:['Un estado contiene más de un elemento completo y el analizador no sabe qué regla aplicar','El parser confunde un token terminal con el símbolo inicial de la gramática aumentada','Cuando existen dos reducciones posibles al mismo tiempo'], correct:2 },
+{ question:'¿Cuál es la "regla de oro" que aplica el método SLR(1) antes de ejecutar una reducción?', options:['Solo reduce si el lookahead pertenece explícitamente al conjunto Siguiente (Follow) del no terminal','Reduce ciegamente sin importar el token de entrada si el punto está a la izquierda','Desplaza los tokens de Follow a la pila antes de comprobar el estado del DFA'], correct:0 },
+{ question:'Ante un conflicto Shift-Reduce en estructuras prácticas, ¿qué acción prefiere el parser de forma natural?', options:['La acción de desplazamiento (Shift) para resolver problemas como el dangling else','La acción de reducción (Reduce) para compactar la pila lo antes posible','Detener el proceso y emitir un error de sintaxis de forma inmediata'], correct:0 },
+{ question:'¿Cuál es el principal inconveniente o "talón de Aquiles" del método SLR(1)?', options:['La aparición de "conflictos falsos" por usar un conjunto Siguiente global que ignora el contexto específico','Que requiere el doble de memoria al construir un DFA diferente al de LR(0)','Su incapacidad absoluta para procesar tokens que contengan caracteres alfanuméricos'], correct:0 },
+{ question:'¿Qué métodos avanzados resuelven los conflictos falsos de SLR(1) integrando el lookahead en la construcción del autómata?', options:['Los métodos LALR y CLR','Los árboles AVL y las búsquedas en profundidad (DFS)','Los analizadores descendentes recursivos con backtracking'], correct:0 },
+{ question:'Si el token de entrada no permite un desplazamiento válido y no está en Follow para una reducción, ¿qué hace el parser SLR(1)?', options:['Detiene el proceso de análisis y declara formalmente un error sintáctico','Limpia la pila por completo y reintenta la lectura desde el símbolo inicial','Ignora el token actual y pasa al siguiente elemento del buffer automáticamente'], correct:0 }
+];
+
+const dragQuestions=[
+{ title:'Ordena el proceso general del parser ascendente:', items:['Reducir','Leer token','Consultar DFA','Desplazar'], correct:['Leer token','Consultar DFA','Desplazar','Reducir'] },
+{ title:'Ordena el flujo de decisión de SLR(1):', items:['Reducir si pertenece a Follow','Leer lookahead','Verificar transición de desplazamiento','Revisar estado en cima de pila'], correct:['Revisar estado en cima de pila','Leer lookahead','Verificar transición de desplazamiento','Reducir si pertenece a Follow'] },
+{ title:'Ordena el proceso de aceptación de una cadena:', items:['Aceptar cadena','Reducir símbolo inicial','Vaciar entrada','Construir derivación'], correct:['Reducir símbolo inicial','Vaciar entrada','Aceptar cadena','Construir derivación'] }
+];
+
+const simulationQuestions=[
+{ pile:'( ( a', input:') )', question:'El parser reconoce la regla A → a en el tope. ¿Qué acción realiza?', correct:'Reduce' },
+{ pile:'E + n', input:'$', question:'La entrada ha llegado al final ($). ¿Qué acción debe ejecutar el parser utilizando Siguiente(E)?', correct:'Reduce' },
+{ pile:'(', input:'a )', question:'Existe una transición válida en el DFA para el token "a". ¿Qué ocurre?', correct:'Shift' },
+{ pile:'E +', input:'n $', question:'El estado superior de la pila espera procesar el terminal "n" que coincide con la entrada. ¿Qué acción ejecuta?', correct:'Shift' },
+{ pile:'S\' → S', input:'$', question:'La regla reducida corresponde a la producción inicial aumentada y la entrada está vacía ($). ¿Qué acción se determina?', correct:'Accept' }
+];
+
+const matchingQuestions=[
+{ pairs:[ ['Lookahead','Siguiente token de entrada'], ['DFA','Autómata Finito Determinista'], ['Follow','Conjunto de seguimiento del no terminal'] ] }
+];
+
+// SYSTEM ROUTING STATES
+let activities=[];
+let currentIndex=0;
+let userAnswers={};
+let activityQuestionsCache = {};
+let wordSearchState = null;
+let currentSelectedWordString = '';
+
+function startExam(){
+const team=document.getElementById('teamName').value.trim();
+const members=[...document.querySelectorAll('.memberInput')].map(el=>el.value.trim()).filter(Boolean);
+
+if(team.length < 3){
+alert('El nombre del equipo debe tener al menos 3 caracteres.');
+return;
+}
+
+if(members.length===0){
+alert('Por favor agrega al menos un integrante.');
+return;
+}
+
+timerStarted=true;
+startTimer();
+document.getElementById('registerSection').classList.remove('active');
+document.getElementById('examSection').classList.add('active');
+
+activities=shuffle([
+{type:'multiple'},
+{type:'drag'},
+{type:'simulation'},
+{type:'matching'},
+{type:'wordsearch'}
+]);
+
+loadActivity();
+}
+
+function updateProgress(){
+const percent=((currentIndex+1)/activities.length)*100;
+document.getElementById('progressBar').style.width=percent+'%';
+}
+
+function loadActivity(){
+updateProgress();
+const activity=activities[currentIndex];
+const container=document.getElementById('activityContainer');
+container.innerHTML='';
+
+document.getElementById('nextBtn').disabled = !userAnswers[currentIndex];
+
+if(activity.type==='multiple') renderMultiple(container);
+if(activity.type==='drag') renderDrag(container);
+if(activity.type==='simulation') renderSimulation(container);
+if(activity.type==='matching') renderMatching(container);
+if(activity.type==='wordsearch') renderWordSearch(container);
+}
+
+// 1. MODULE: MULTIPLE CHOICE
+function renderMultiple(container){
+let questions = activityQuestionsCache[currentIndex];
+if (!questions) {
+questions = shuffle([...multipleQuestions]).slice(0,10).map(q => {
+let opts = q.options.map((o,i)=>({ text:o, correct:i===q.correct }));
+return { ...q, options: shuffle(opts) };
+});
+activityQuestionsCache[currentIndex] = questions;
+}
+
+let html='';
+questions.forEach((q, qIdx)=>{
+html+=`<div class="card"><h2>${qIdx+1}. ${q.question}</h2>`;
+q.options.forEach(opt => {
+let checked = (userAnswers[currentIndex]?.savedState?.[qIdx] === opt.text) ? 'checked' : '';
+html+=`
+<label class="option">
+<input type="radio" name="multi${qIdx}" value="${opt.text}" ${checked} data-is-correct="${opt.correct?1:0}">
+${opt.text}
+</label>`;
+});
+html+='</div>';
+});
+
+container.innerHTML=html;
+
+const checkCompletion = () => {
+const totalAnswered = [...container.querySelectorAll('input:checked')].length;
+if(totalAnswered === questions.length){
+document.getElementById('nextBtn').disabled = false;
+}
+};
+
+const inputs = container.querySelectorAll('input');
+inputs.forEach(input=>{
+input.addEventListener('change', checkCompletion);
+});
+
+checkCompletion();
+}
+
+// 2. MODULE: DRAG & DROP
+function renderDrag(container){
+let q = activityQuestionsCache[currentIndex];
+if (!q) {
+q = shuffle([...dragQuestions])[0];
+activityQuestionsCache[currentIndex] = q;
+}
+
+let currentOrder = userAnswers[currentIndex]?.savedState || forceShuffle(q.items, q.correct);
+
+container.innerHTML=`
+<div class="card">
+<h2>${q.title}</h2>
+<div class="drag-container" id="dragContainer">
+${currentOrder.map(item=>`<div class="drag-item">${item}</div>`).join('')}
+</div>
+<p style="margin-top:20px; color: #7dffc4;">Arrastra los elementos para ordenarlos de arriba hacia abajo.</p>
+</div>
+`;
+
+new Sortable(document.getElementById('dragContainer'),{
+animation:150,
+onSort: () => { document.getElementById('nextBtn').disabled=false; }
+});
+document.getElementById('nextBtn').disabled=false;
+}
+
+// 3. MODULE: COMPILER AUTOMATA SIMULATION
+function renderSimulation(container){
+let q = activityQuestionsCache[currentIndex];
+if (!q) {
+q = shuffle([...simulationQuestions])[0];
+activityQuestionsCache[currentIndex] = q;
+}
+
+let savedVal = userAnswers[currentIndex]?.savedState || "";
+
+container.innerHTML=`
+<div class="card">
+<h2>Simulación de Máquina Shift-Reduce</h2>
+<p><strong>Pila actual:</strong> [ ${q.pile} ]</p>
+<p><strong>Búfer de Entrada:</strong> ${q.input}</p>
+<p style="margin-top:15px; color:#00ffaa;">${q.question}</p>
+
+<label class="option">
+<input type="radio" name="sim" value="Shift" ${savedVal==='Shift'?'checked':''}> Shift (Desplazar)
+</label>
+<label class="option">
+<input type="radio" name="sim" value="Reduce" ${savedVal==='Reduce'?'checked':''}> Reduce (Reducir)
+</label>
+<label class="option">
+<input type="radio" name="sim" value="Accept" ${savedVal==='Accept'?'checked':''}> Accept (Aceptar)
+</label>
+</div>
+`;
+
+container.querySelectorAll('input').forEach(input=>{
+input.addEventListener('change',()=>{
+document.getElementById('nextBtn').disabled=false;
+});
+});
+}
+
+// 4. MODULE: GLOSSARY MATCHING
+function renderMatching(container){
+let q = matchingQuestions[0];
+activities[currentIndex].question=q;
+
+let right=q.pairs.map(p=>p[1]);
+shuffle(right);
+
+let html=`<div class="card"><h2>Relación de Conceptos</h2>`;
+q.pairs.forEach((pair,index)=>{
+let savedSel = userAnswers[currentIndex]?.savedState?.[index] || "";
+html+=`
+<div class="match-item">
+<p><strong>${pair[0]}</strong></p>
+<select class="match-select" data-index="${index}">
+<option value="">-- Selecciona la definición correcta --</option>
+${right.map(r=>`<option value="${r}" ${savedSel===r?'selected':''}>${r}</option>`).join('')}
+</select>
+</div>
+`;
+});
+html+='</div>';
+
+container.innerHTML=html;
+
+container.querySelectorAll('select').forEach(sel=>{
+sel.addEventListener('change',()=>{
+const all=[...container.querySelectorAll('select')].every(s=>s.value!=='');
+if(all){
+document.getElementById('nextBtn').disabled=false;
+}
+});
+});
+}
+
+// 5. MODULE: MATRIX WORD SEARCH
+function renderWordSearch(container){
+const words=['SHIFT','FOLLOW','STACK','PARSER','TOKEN','PILA','DFA','REDUCE','CONFLICTO','DERIVACION','AUTOMATA'];
+const size=12;
+
+if (!wordSearchState) {
+const grid=[];
+for(let r=0;r<size;r++){
+grid[r]=[];
+for(let c=0;c<size;c++) grid[r][c]='';
+}
+
+words.forEach(word => {
+let placed = false;
+let attempts = 0;
+while(!placed && attempts < 100) {
+let dir = Math.random() > 0.5 ? 'H' : 'V';
+let row = Math.floor(Math.random() * size);
+let col = Math.floor(Math.random() * size);
+
+if(dir === 'H' && col + word.length <= size) {
+let collides = false;
+for(let i=0; i<word.length; i++) {
+if(grid[row][col+i] !== '' && grid[row][col+i] !== word[i]) collides = true;
+}
+if(!collides) {
+for(let i=0; i<word.length; i++) grid[row][col+i] = word[i];
+placed = true;
+}
+} else if(dir === 'V' && row + word.length <= size) {
+let collides = false;
+for(let i=0; i<word.length; i++) {
+if(grid[row+i][col] !== '' && grid[row+i][col] !== word[i]) collides = true;
+}
+if(!collides) {
+for(let i=0; i<word.length; i++) grid[row+i][col] = word[i];
+placed = true;
+}
+}
+attempts++;
+}
+});
+
+for(let r=0;r<size;r++){
+for(let c=0;c<size;c++){
+if(grid[r][c] === '') grid[r][c]=String.fromCharCode(65+Math.floor(Math.random()*26));
+}
+}
+wordSearchState = { grid: grid, found: [], targets: words };
+}
+
+let html=`
+<div class="card">
+<h2>Sopa de Letras Terminal</h2>
+<p>Encuentra haciendo clic secuencial en las letras: <strong style="color:#00ffaa">${wordSearchState.targets.join(', ')}</strong></p>
+<div style="margin-top:10px;">
+<button type="button" onclick="resetWordSelection()" style="padding:6px 12px; background:#ff3333; color:#fff;">Limpiar Selección</button>
+<span id="currentWordChain" style="margin-left:10px; color:#7dffc4;">Selección: </span>
+</div>
+<div class="word-grid" id="wordGrid">
+`;
+
+for(let r=0;r<size;r++){
+for(let c=0;c<size;c++){
+let isFound = wordSearchState.found.some(f => f.cells.includes(`${r}-${c}`));
+html+=`<div class="word-cell ${isFound?'found':''}" data-row="${r}" data-col="${c}" data-letter="${wordSearchState.grid[r][c]}">${wordSearchState.grid[r][c]}</div>`;
+}
+}
+html+=`</div><p style="margin-top:20px; font-weight:bold;" id="wordStatus">Encontradas: ${wordSearchState.found.map(f=>f.word).join(', ') || 'Ninguna'}</p></div>`;
+
+container.innerHTML=html;
+
+currentSelectedWordString='';
+const cells=document.querySelectorAll('.word-cell');
+
+cells.forEach(cell=>{
+cell.addEventListener('click',()=>{
+if(cell.classList.contains('selected')) return;
+
+cell.classList.remove('found');
+cell.classList.add('selected');
+currentSelectedWordString+=cell.dataset.letter;
+document.getElementById('currentWordChain').innerText = "Selección: " + currentSelectedWordString;
+
+wordSearchState.targets.forEach(word=>{
+if(currentSelectedWordString === word){
+let selectedCells = [...document.querySelectorAll('.word-cell.selected')].map(c => `${c.dataset.row}-${c.dataset.col}`);
+
+if(!wordSearchState.found.some(f => f.word === word)){
+wordSearchState.found.push({ word: word, cells: selectedCells });
+}
+
+document.getElementById('wordStatus').innerHTML=`Encontradas: <strong style="color:#00ffaa">${wordSearchState.found.map(f=>f.word).join(', ')}</strong>`;
+
+wordSearchState.found.forEach(f => {
+f.cells.forEach(coord => {
+let [r, c] = coord.split('-');
+let matchedCell = document.querySelector(`.word-cell[data-row="${r}"][data-col="${c}"]`);
+if(matchedCell) {
+matchedCell.classList.remove('selected');
+matchedCell.classList.add('found');
+}
+});
+});
+
+currentSelectedWordString='';
+document.getElementById('currentWordChain').innerText = "Selección: ";
+}
+});
+
+if(wordSearchState.found.length === wordSearchState.targets.length){
+document.getElementById('nextBtn').disabled=false;
+}
+});
+});
+
+if(wordSearchState.found.length === wordSearchState.targets.length){
+document.getElementById('nextBtn').disabled=false;
+}
+}
+
+function resetWordSelection(){
+currentSelectedWordString = '';
+document.getElementById('currentWordChain').innerText = "Selección: ";
+document.querySelectorAll('.word-cell.selected').forEach(c=>{
+c.classList.remove('selected');
+});
+
+if (wordSearchState) {
+wordSearchState.found.forEach(f => {
+f.cells.forEach(coord => {
+let [r, c] = coord.split('-');
+let matchedCell = document.querySelector(`.word-cell[data-row="${r}"][data-col="${c}"]`);
+if(matchedCell) matchedCell.classList.add('found');
+});
+});
+}
+}
+
+// PERSISTENCE STATE EVALUATION ENGINE
+function saveCurrent(){
+const activity=activities[currentIndex];
+if(!activity) return;
+
+if(activity.type==='multiple'){
+let localScore=0;
+let savedInputs = {};
+document.querySelectorAll('input[type="radio"]').forEach(r=>{
+if(r.checked){
+localScore += parseInt(r.getAttribute('data-is-correct'));
+let nameAttr = r.getAttribute('name');
+let index = nameAttr.replace('multi', '');
+savedInputs[index] = r.value;
+}
+});
+const maxQuestions = activityQuestionsCache[currentIndex]?.length || 10;
+userAnswers[currentIndex]={score: localScore, max: maxQuestions, savedState: savedInputs};
+}
+
+if(activity.type==='drag'){
+const current=[...document.querySelectorAll('.drag-item')].map(el=>el.innerText.trim());
+const correct=activityQuestionsCache[currentIndex].correct.map(item=>item.trim());
+const isCorrect = JSON.stringify(current)===JSON.stringify(correct);
+userAnswers[currentIndex]={score: isCorrect?1:0, max: 1, savedState: current};
+}
+
+if(activity.type==='simulation'){
+const val=document.querySelector('input[name="sim"]:checked')?.value;
+const targetCorrect = activityQuestionsCache[currentIndex].correct;
+userAnswers[currentIndex]={score: val===targetCorrect?1:0, max: 1, savedState: val};
+}
+
+if(activity.type==='matching'){
+const selects=[...document.querySelectorAll('.match-select')];
+let correctCount=0;
+let savedSelects = {};
+selects.forEach((s)=>{
+let idx = s.getAttribute('data-index');
+savedSelects[idx] = s.value;
+if(s.value===activity.question.pairs[parseInt(idx)][1]) correctCount++;
+});
+const isAllCorrect = correctCount===activity.question.pairs.length;
+userAnswers[currentIndex]={score: isAllCorrect?1:0, max: 1, savedState: savedSelects};
+}
+
+if(activity.type==='wordsearch'){
+let pass = wordSearchState?.found.length === wordSearchState?.targets.length;
+userAnswers[currentIndex]={score: pass?1:0, max: 1, savedState: true};
+}
+}
+
+function nextActivity(){
+saveCurrent();
+if(currentIndex<activities.length-1){
+currentIndex++;
+loadActivity();
+}else{
+finishQuiz();
+}
+}
+
+function previousActivity(){
+saveCurrent();
+if(currentIndex>0){
+currentIndex--;
+loadActivity();
+}
+}
+
+// COMPILER EVALUATION & METRICS GENERATION
+function finishQuiz(){
+saveCurrent();
+timerStarted=false;
+
+let finalScore = 0;
+let maxPossibleScore = 0;
+
+Object.values(userAnswers).forEach(ans => {
+finalScore += ans.score;
+maxPossibleScore += ans.max;
+});
+
+const percent=Math.round((finalScore/maxPossibleScore)*100);
+
+document.getElementById('examSection').style.display='none';
+const resSec = document.getElementById('resultSection');
+resSec.style.display='block';
+
+document.getElementById('scoreText').innerHTML=`
+<h3 style="font-size:2rem; margin-top:15px;">Puntuación Final: ${finalScore} / ${maxPossibleScore}</h3>
+<h2 style="font-size:3rem; color:#00ff88; margin-top:10px;">${percent}%</h2>
+`;
+
+const members=[...document.querySelectorAll('.memberInput')].map(el=>el.value.trim()).filter(Boolean).join(', ');
+
+document.getElementById('teamInfo').innerHTML=`
+<p style="font-size:1.2rem;"><strong>Equipo:</strong> ${document.getElementById('teamName').value}</p>
+<p style="font-size:1.2rem; margin-top:5px;"><strong>Integrantes:</strong> ${members}</p>
+`;
+
+document.getElementById('finalTime').innerText=document.getElementById('time').innerText;
+document.getElementById('token').innerText=generateToken();
+}
+
+function generateToken(){
+return Math.random().toString(36).substring(2,8).toUpperCase()+'-SLR-'+Math.random().toString(36).substring(2,6).toUpperCase();
+}
+
+// RESET TO INITIAL STATE ENGINE
+function resetToStart(){
+seconds = 0;
+timerStarted = false;
+currentIndex = 0;
+userAnswers = {};
+activityQuestionsCache = {};
+wordSearchState = null;
+currentSelectedWordString = '';
+if (timerInterval) clearInterval(timerInterval);
+
+document.getElementById('time').innerText = "00:00";
+document.getElementById('progressBar').style.width = "0%";
+document.getElementById('teamName').value = "";
+document.getElementById('memberCount').value = "";
+document.getElementById('membersContainer').innerHTML = "";
+
+document.getElementById('resultSection').classList.remove('active');
+document.getElementById('examSection').classList.remove('active');
+document.getElementById('resultSection').style.display = 'none';
+document.getElementById('examSection').style.display = 'none';
+document.getElementById('registerSection').classList.add('active');
+}
+
+</script>
+</body>
+</html>

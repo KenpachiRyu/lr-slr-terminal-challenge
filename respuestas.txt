@@ -1,0 +1,174 @@
+BANCO DE REACTIVOS COMPLETO - ANÁLISIS SINTÁCTICO ASCENDENTE (LR Y SLR)
+========================================================================
+
+------------------------------------------------------------------------
+BLOQUE 1: OPCIÓN MÚLTIPLE (20 Reactivos)
+------------------------------------------------------------------------
+
+1. ¿Qué significa la R en el acrónimo de los analizadores sintácticos LR?
+   - Recursive evaluation
+   * Rightmost derivation (derivación por la derecha en orden inverso)
+   - Reduced lookahead state
+
+2. ¿Qué componente utiliza SLR(1) para resolver los conflictos de ambigüedad del autómata base?
+   * Un token de búsqueda hacia adelante (Lookahead) y los conjuntos Siguiente
+   - Una tabla de símbolos dinámicos recursivos
+   - Un árbol sintáctico invertido sin estados
+
+3. ¿Qué elementos estructurales se almacenan explícitamente en la pila de un analizador LR?
+   * Números de estado y símbolos (tokens o no terminales)
+   - Únicamente cadenas de entrada en texto plano
+   - Expresiones regulares del analizador léxico
+
+4. ¿Con qué estado inicia la pila de control y con cuál termina si el análisis ascendente es exitoso?
+   * Empieza vacía y termina conteniendo únicamente el símbolo inicial de la gramática
+   - Empieza con $ y termina con todos los tokens procesados secuencialmente
+   - Empieza llena con el prefijo viable y termina completamente vacía
+
+5. ¿En qué consiste la operación fundamental de Desplazamiento (Shift)?
+   * Transferir un símbolo terminal de la entrada a la parte superior de la pila
+   - Sustituir una cadena por un no terminal basándose en una producción
+   - Cambiar el autómata de determinístico a no determinístico
+
+6. ¿Cuándo ocurre una operación de Reducción (Reduce)?
+   * Cuando la cadena en la cima coincide con el lado derecho de una producción y se sustituye por su no terminal
+   - Cuando se limpia la pila para corregir un conflicto de ambigüedad léxica
+   - Al descartar el token actual de la entrada por no pertenecer a Follow
+
+7. ¿Por qué es un requisito técnico indispensable aumentar la gramática con una regla S' -> S?
+   * Para proveer al analizador un punto de aceptación único, claro y distinguido
+   - Para que el analizador léxico reconozca los saltos de línea de forma nativa
+   - Para evitar que el autómata finite genere transiciones del tipo épsilon
+
+8. ¿Cómo se denominan las cadenas intermedias de símbolos generadas durante el proceso de derivación inversa?
+   * Formas sentenciales derechas
+   - Prefijos viables deterministas
+   - Tokens de control sintáctico
+
+9. ¿Qué es el "Prefijo Viable" en el contexto del análisis sintáctico de reducción por desplazamiento?
+   * La secuencia de símbolos que se encuentra almacenada en la pila de análisis
+   - El conjunto de tokens que quedan por procesar en el buffer de entrada
+   - La ruta de estados del DFA que no contienen reducciones posibles
+
+10. ¿A qué se refiere el término "Handle" o "Controlador" en una forma sentencial?
+    * A la cadena en el tope de la pila que coincide con una producción, junto con dicha regla
+    - Al estado inicial del DFA que controla las transiciones de los tokens terminales
+    - Al mecanismo encargado de disparar los errores de sintaxis en SLR(1)
+
+11. ¿Qué representa exactamente el punto (•) dentro de un elemento LR(0)?
+    * El avance del reconocimiento de la regla (qué se ha analizado y qué falta)
+    - Un marcador que indica un conflicto Shift-Reduce inminente
+    - El final absoluto de la cadena de entrada evaluada por el parser
+
+12. ¿En qué se diferencian los elementos de núcleo de los elementos de cerradura en el DFA?
+    * Los de núcleo determinan el estado y transiciones; los de cerradura añaden reglas vía épsilon
+    - Los de núcleo solo contienen terminales y los de cerradura contienen no terminales
+    - Los de núcleo se vacían en la pila y los de cerradura detienen el árbol sintáctico
+
+13. ¿Qué condición define a una gramática como estrictamente LR(0)?
+    * Cada estado del DFA es puramente de desplazamiento o de reducción con un único elemento completo
+    - No utiliza operadores matemáticos en sus formas sentenciales intermedias
+    - Su conjunto Follow carece de tokens de fin de cadena ($)
+
+14. ¿Cuándo se presenta un conflicto de reducción por desplazamiento (Shift-Reduce)?
+    * Cuando un estado sugiere reducir por una regla y simultáneamente permite desplazar un token
+    - Cuando la pila se llena por completo y no quedan tokens en el buffer de entrada
+    - Cuando dos producciones idénticas compiten por limpiar el mismo no terminal
+
+15. ¿Qué ocurre en un conflicto de Reducción-Reducción (Reduce-Reduce)?
+    * Un estado contiene más de un elemento completo y el analizador no sabe qué regla aplicar
+    - El parser confunde un token terminal con el símbolo inicial de la gramática aumentada
+    - El lookahead pertenece simultáneamente a First y a Follow del mismo elemento
+
+16. ¿Cuál es la "regla de oro" que aplica el método SLR(1) antes de ejecutar una reducción?
+    * Solo reduce si el lookahead pertenece explícitamente al conjunto Siguiente (Follow) del no terminal
+    - Reduce ciegamente sin importar el token de entrada si el punto está a la izquierda
+    - Desplaza los tokens de Follow a la pila antes de comprobar el estado del DFA
+
+17. Ante un conflicto Shift-Reduce en estructuras prácticas, ¿qué acción prefiere el parser de forma natural?
+    * La acción de desplazamiento (Shift) para resolver problemas como el dangling else
+    - La acción de reducción (Reduce) para compactar la pila lo antes posible
+    - Detener el proceso y emitir un error de sintaxis de forma inmediata
+
+18. ¿Cuál es el principal inconveniente o "talón de Aquiles" del método SLR(1)?
+    * La aparición de "conflictos falsos" por usar un conjunto Siguiente global que ignora el contexto específico
+    - Que requiere el doble de memoria al construir un DFA diferente al de LR(0)
+    - Su incapacidad absoluta para procesar tokens que contengan caracteres alfanuméricos
+
+19. ¿Qué métodos avanzados resuelven los conflictos falsos de SLR(1) integrando el lookahead en la construcción del autómata?
+    * Los métodos LALR y CLR
+    - Los árboles AVL y las búsquedas en profundidad (DFS)
+    - Los analizadores descendentes recursivos con backtracking
+
+20. Si el token de entrada no permite un desplazamiento válido y no está en Follow para una reducción, ¿qué hace el parser SLR(1)?
+    * Detiene el proceso de análisis y declara formalmente un error sintáctico
+    - Limpia la pila por completo y reintenta la lectura desde el símbolo inicial
+    - Ignora el token actual y pasa al siguiente elemento del buffer automáticamente
+
+
+------------------------------------------------------------------------
+BLOQUE 2: MAQUINA SHIFT-REDUCE / SIMULACIÓN (5 Escenarios)
+------------------------------------------------------------------------
+
+Escenario 1:
+Pila actual: [ ( ( a ]
+Búfer de Entrada: ) )
+Pregunta: El parser reconoce la regla A → a en el tope. ¿Qué acción realiza?
+* Respuesta Correcta: Reduce
+
+Escenario 2:
+Pila actual: [ E + n ]
+Búfer de Entrada: $
+Pregunta: La entrada ha llegado al final ($). ¿Qué acción debe ejecutar el parser utilizando Siguiente(E)?
+* Respuesta Correcta: Reduce
+
+Escenario 3:
+Pila actual: [ ( ]
+Búfer de Entrada: a )
+Pregunta: Existe una transición válida en el DFA para el token "a". ¿Qué ocurre?
+* Respuesta Correcta: Shift
+
+Escenario 4:
+Pila actual: [ E + ]
+Búfer de Entrada: n $
+Pregunta: El estado superior de la pila espera procesar el terminal "n" que coincide con la entrada. ¿Qué acción ejecuta?
+* Respuesta Correcta: Shift
+
+Escenario 5:
+Pila actual: [ S' → S ]
+Búfer de Entrada: $
+Pregunta: La regla reducida corresponde a la producción inicial aumentada y la entrada está vacía ($). ¿Qué acción se determina?
+* Respuesta Correcta: Accept
+
+
+------------------------------------------------------------------------
+BLOQUE 3: REORDENAMIENTO / DRAG & DROP (3 Reactivos)
+------------------------------------------------------------------------
+
+Ejercicio 1: Ordena el proceso general del parser ascendente
+1. Leer token
+2. Consultar DFA
+3. Desplazar
+4. Reducir
+
+Ejercicio 2: Ordena el flujo de decisión de SLR(1)
+1. Revisar estado en cima de pila
+2. Leer lookahead
+3. Verificar transición de desplazamiento
+4. Reducir si pertenece a Follow
+
+Ejercicio 3: Ordena el proceso de aceptación de una cadena
+1. Reducir símbolo inicial
+2. Vaciar entrada
+3. Aceptar cadena
+4. Construir derivación
+
+
+------------------------------------------------------------------------
+BLOQUE 4: RELACIÓN DE CONCEPTOS / GLOSARIO (1 Reactivo)
+------------------------------------------------------------------------
+
+Concepto -> Definición Correcta:
+- Lookahead -> Siguiente token de entrada
+- DFA -> Autómata Finito Determinista
+- Follow -> Conjunto de seguimiento del no terminal
